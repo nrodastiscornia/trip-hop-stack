@@ -31,6 +31,11 @@
     "/postgres-data"
   ],
   "dependencies": {
+    "@emotion/cache": "latest",
+    "@emotion/react": "latest",
+    "@emotion/server": "latest",
+    "@emotion/styled": "latest",
+    "@mui/material": "latest",
     "@isaacs/express-prometheus-middleware": "^1.2.1",
     "@prisma/client": "^4.9.0",
     "@remix-run/express": "*",
