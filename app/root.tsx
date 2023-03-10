@@ -14,7 +14,7 @@ import { useContext } from "react";
 import { getUser } from "./session.server";
 import Layout from "./src/Layout";
 import StylesContext from "./src/StylesContext";
-
+import theme from "./src/theme";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -28,11 +28,20 @@ export async function loader({ request }: LoaderArgs) {
   });
 }
 
-function Document({ children, title }: { children: React.ReactNode; title?: string }) {
+function Document({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) {
   const styleData = useContext(StylesContext);
 
   return (
-    <html lang="en">
+    // Needs suppressHydrationWarning={true}
+    // to avoid 
+    // Warning: Did not expect server HTML to contain a <script> in <html>. 
+    <html lang="en" suppressHydrationWarning={true}>
       <head>
         <meta name="theme-color" content={theme.palette.primary.main} />
         <Meta />
@@ -44,7 +53,7 @@ function Document({ children, title }: { children: React.ReactNode; title?: stri
         {styleData?.map(({ key, ids, css }) => (
           <style
             key={key}
-            data-emotion={`${key} ${ids.join(' ')}`}
+            data-emotion={`${key} ${ids.join(" ")}`}
             // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: css }}
           />
@@ -54,7 +63,7 @@ function Document({ children, title }: { children: React.ReactNode; title?: stri
         {children}
         <ScrollRestoration />
         <Scripts />
-        {process.env.NODE_ENV === 'development' && <LiveReload />}
+        {process.env.NODE_ENV === "development" && <LiveReload />}
       </body>
     </html>
   );
@@ -81,7 +90,10 @@ export function ErrorBoundary({ error }: { error: Error }) {
           <h1>There was an error</h1>
           <p>{error.message}</p>
           <hr />
-          <p>Hey, developer, you should replace this with what you want your users to see.</p>
+          <p>
+            Hey, developer, you should replace this with what you want your
+            users to see.
+          </p>
         </div>
       </Layout>
     </Document>
@@ -95,10 +107,17 @@ export function CatchBoundary() {
   let message;
   switch (caught.status) {
     case 401:
-      message = <p>Oops! Looks like you tried to visit a page that you do not have access to.</p>;
+      message = (
+        <p>
+          Oops! Looks like you tried to visit a page that you do not have access
+          to.
+        </p>
+      );
       break;
     case 404:
-      message = <p>Oops! Looks like you tried to visit a page that does not exist.</p>;
+      message = (
+        <p>Oops! Looks like you tried to visit a page that does not exist.</p>
+      );
       break;
 
     default:
