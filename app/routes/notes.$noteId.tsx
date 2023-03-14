@@ -35,9 +35,7 @@ export default function NoteDetailsPage() {
       <p>{data.note.body}</p>
       <hr />
       <Form method="post">
-        <button type="submit">
-          Delete
-        </button>
+        <button type="submit">Delete</button>
       </Form>
     </div>
   );

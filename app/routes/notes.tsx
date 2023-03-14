@@ -19,22 +19,18 @@ export default function NotesPage() {
   return (
     <div>
       <header>
-        <h1 >
+        <h1>
           <Link to=".">Notes</Link>
         </h1>
         <p>{user.email}</p>
         <Form action="/logout" method="post">
-          <button type="submit">
-            Logout
-          </button>
+          <button type="submit">Logout</button>
         </Form>
       </header>
 
       <main>
         <div>
-          <Link to="new">
-            + New Note
-          </Link>
+          <Link to="new">+ New Note</Link>
 
           <hr />
 

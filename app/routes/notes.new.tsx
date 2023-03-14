@@ -53,7 +53,8 @@ export default function NewNotePage() {
         flexDirection: "column",
         gap: 8,
         width: "100%",
-      }}>
+      }}
+    >
       <div>
         <label>
           <span>Title: </span>
@@ -67,9 +68,7 @@ export default function NewNotePage() {
           />
         </label>
         {actionData?.errors?.title && (
-          <div  id="title-error">
-            {actionData.errors.title}
-          </div>
+          <div id="title-error">{actionData.errors.title}</div>
         )}
       </div>
 
@@ -87,16 +86,12 @@ export default function NewNotePage() {
           />
         </label>
         {actionData?.errors?.body && (
-          <div id="body-error">
-            {actionData.errors.body}
-          </div>
+          <div id="body-error">{actionData.errors.body}</div>
         )}
       </div>
 
       <div>
-        <button type="submit">
-          Save
-        </button>
+        <button type="submit">Save</button>
       </div>
     </Form>
   );
