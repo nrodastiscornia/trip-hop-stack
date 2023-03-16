@@ -1,57 +1,144 @@
+import { PassThrough } from "stream";
+
 import type { EntryContext } from "@remix-run/node";
 import { Response } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import { renderToString } from "react-dom/server";
-
-import createEmotionCache from "./src/createEmotionCache";
-import theme from "./src/theme";
-import StylesContext from "./src/StylesContext";
+import isbot from "isbot";
+import { renderToPipeableStream } from "react-dom/server";
+import createEmotionCache from "~/src/createEmotionCache";
+import theme from "~/src/theme";
+import StylesContext from "~/src/StylesContext";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
-import { CacheProvider } from "@emotion/react";
+import { CacheProvider as EmotionCacheProvider } from "@emotion/react";
 import createEmotionServer from "@emotion/server/create-instance";
 
-export default function handleRequest(
+const ABORT_DELAY = 5000;
+
+const handleRequest = (
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: EntryContext,
-) {
-  const cache = createEmotionCache();
-  const { extractCriticalToChunks } = createEmotionServer(cache);
+  remixContext: EntryContext
+) =>
+  isbot(request.headers.get("user-agent"))
+    ? handleBotRequest(
+        request,
+        responseStatusCode,
+        responseHeaders,
+        remixContext
+      )
+    : handleBrowserRequest(
+        request,
+        responseStatusCode,
+        responseHeaders,
+        remixContext
+      );
+export default handleRequest;
 
-  const MuiRemixServer = () => (
-    <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <RemixServer context={remixContext} url={request.url} />
-      </ThemeProvider>
-    </CacheProvider>
-  );
+const handleBotRequest = (
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  remixContext: EntryContext
+) =>
+  new Promise((resolve, reject) => {
+    let didError = false;
+    const emotionCache = createEmotionCache();
 
-  // Render the component to a string.
-  const html = renderToString(
-    <StylesContext.Provider value={null}>
-      <MuiRemixServer />
-    </StylesContext.Provider>,
-  );
+    const { pipe, abort } = renderToPipeableStream(
+      <EmotionCacheProvider value={emotionCache}>
+        <StylesContext.Provider value={null}>
+          <ThemeProvider theme={theme}>
+            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+            <CssBaseline />
+            <RemixServer context={remixContext} url={request.url} />
+          </ThemeProvider>
+        </StylesContext.Provider>
+    </EmotionCacheProvider>,
+      {
+        onAllReady: () => {
+          const reactBody = new PassThrough();
+          const emotionServer = createEmotionServer(emotionCache);
 
-  // Grab the CSS from emotion
-  const emotionChunks = extractCriticalToChunks(html);
+          const bodyWithStyles = emotionServer.renderStylesToNodeStream();
+          reactBody.pipe(bodyWithStyles);
 
-  // Re-render including the extracted css.
-  const markup = renderToString(
-    <StylesContext.Provider value={emotionChunks.styles}>
-      <MuiRemixServer />
-    </StylesContext.Provider>,
-  );
+          responseHeaders.set("Content-Type", "text/html");
 
-  responseHeaders.set('Content-Type', 'text/html');
+          resolve(
+            new Response(bodyWithStyles, {
+              headers: responseHeaders,
+              status: didError ? 500 : responseStatusCode,
+            })
+          );
 
-  return new Response(`<!DOCTYPE html>${markup}`, {
-    status: responseStatusCode,
-    headers: responseHeaders,
+          pipe(reactBody);
+        },
+        onShellError: (error: unknown) => {
+          reject(error);
+        },
+        onError: (error: unknown) => {
+          didError = true;
+
+          console.error(error);
+        },
+      }
+    );
+
+    setTimeout(abort, ABORT_DELAY);
   });
-}
+
+const handleBrowserRequest = (
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  remixContext: EntryContext
+) =>
+  new Promise((resolve, reject) => {
+    let didError = false;
+    const emotionCache = createEmotionCache();
+
+    const { pipe, abort } = renderToPipeableStream(
+      <EmotionCacheProvider value={emotionCache}>
+        <StylesContext.Provider value={null}>
+          <ThemeProvider theme={theme}>
+            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+            <CssBaseline />
+            <RemixServer context={remixContext} url={request.url} />
+          </ThemeProvider>
+        </StylesContext.Provider>
+      </EmotionCacheProvider>,
+      {
+        onShellReady: () => {
+          const reactBody = new PassThrough();
+          const emotionServer = createEmotionServer(emotionCache);
+
+          const bodyWithStyles = emotionServer.renderStylesToNodeStream();
+          reactBody.pipe(bodyWithStyles);
+
+          responseHeaders.set("Content-Type", "text/html");
+
+          resolve(
+            new Response(bodyWithStyles, {
+              headers: responseHeaders,
+              status: didError ? 500 : responseStatusCode,
+            })
+          );
+
+          pipe(reactBody);
+        },
+        onShellError: (error: unknown) => {
+          reject(error);
+        },
+        onError: (error: unknown) => {
+          didError = true;
+
+          console.error(error);
+        },
+      }
+    );
+
+    setTimeout(abort, ABORT_DELAY);
+  });

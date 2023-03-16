@@ -11,14 +11,14 @@ import {
 } from "@remix-run/react";
 import { useContext } from "react";
 
-import { getUser } from "./session.server";
-import Layout from "./src/Layout";
-import StylesContext from "./src/StylesContext";
-import theme from "./src/theme";
+import { getUser } from "~/session.server";
+import Layout from "~/src/Layout";
+import StylesContext from "~/src/StylesContext";
+import theme from "~/src/theme";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
-  title: "Remix Notes",
+  title: "MUI + Remix POC",
   viewport: "width=device-width,initial-scale=1",
 });
 
@@ -38,10 +38,7 @@ function Document({
   const styleData = useContext(StylesContext);
 
   return (
-    // Needs suppressHydrationWarning={true}
-    // to avoid 
-    // Warning: Did not expect server HTML to contain a <script> in <html>. 
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en">
       <head>
         <meta name="theme-color" content={theme.palette.primary.main} />
         <Meta />
