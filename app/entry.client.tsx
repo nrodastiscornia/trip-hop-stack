@@ -18,9 +18,7 @@ const hydrate = () => {
           <ThemeProvider theme={theme}>
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
-            <StrictMode>
-              <RemixBrowser />
-            </StrictMode>
+            <RemixBrowser />
           </ThemeProvider>
         </CacheProvider>
       </StrictMode>
